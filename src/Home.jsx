@@ -4,7 +4,10 @@ import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import DonationForm from "./DonationForm";
 import "./App.css";
-
+import Navigation from "./Navigation";
+import Footer from "./Footer";
+import Summary from "./Summary"; // ✨ If you're displaying it here
+import ChatBot from "./ChatBot";
 const Home = () => {
   const navigate = useNavigate();
 
@@ -14,6 +17,7 @@ const Home = () => {
   });
 
   const [summaryData, setSummaryData] = useState(null);
+  const [globalSummary, setGlobalSummary] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -27,21 +31,18 @@ const Home = () => {
           localStorage.removeItem("token");
           navigate("/");
         } else {
+          // 🔁 Monthly summary
           axios
             .get(`http://localhost:8004/dashboard?month=${selectedMonth}`, {
-              headers: {
-                Authorization: `Bearer ${token}`,
-              },
+              headers: { Authorization: `Bearer ${token}` },
             })
-            .then((res) => {
-              console.log("Backend response:", res.data);
-              setSummaryData(res.data.summary);
+            .then((res) => setSummaryData(res.data.summary));
+
+          axios
+            .get("http://localhost:8004/summary", {
+              headers: { Authorization: `Bearer ${token}` },
             })
-            .catch((err) => {
-              console.log("Token rejected by backend", err);
-              localStorage.removeItem("token");
-              navigate("/");
-            });
+            .then((res) => setGlobalSummary(res.data));
         }
       } catch (err) {
         localStorage.removeItem("token");
@@ -50,40 +51,64 @@ const Home = () => {
     }
   }, [selectedMonth]);
 
+  const handleDonationUpdate = () => {
+    const token = localStorage.getItem("token");
+
+    axios
+      .get(`http://localhost:8004/dashboard?month=${selectedMonth}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setSummaryData(res.data.summary));
+
+    axios
+      .get("http://localhost:8004/summary", {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      .then((res) => setGlobalSummary(res.data));
+  };
+
   return (
     <>
       <div>
-        <nav className='main-nav'>
-          <ul>
-            <li>
-              <Link to='/donations'>📝 Donation List</Link>
-            </li>
-            <li>
-              <Link to='/amount'>💰 Donation Amount</Link>
-            </li>
-            <li>
-              <Link to='/trend'>📈 Trend Chart</Link>
-            </li>
-          </ul>
-        </nav>
+        <Navigation />
+        <div style={{ marginTop: "50px" }} className='dashboard'>
+          <div className='donation-section'>
+            <h2 className='section-title'>Make a Difference Today 💖</h2>
 
-        <div className='dashboard'>
-          <DonationForm
-            onDonate={() => {
-              const token = localStorage.getItem("token");
-              axios
-                .get(`http://localhost:8004/dashboard?month=${selectedMonth}`, {
-                  headers: {
-                    Authorization: `Bearer ${token}`,
-                  },
-                })
-                .then((res) => setSummaryData(res.data.summary));
-            }}
-          />
-          <Link className='viewSummary' to='/summary'>
-            📊 View Summary
-          </Link>
+            <div className='donation-content'>
+              <div className='message-left'>
+                <p className='small_msg'>
+                  “One small donation from you can rewrite someone’s future.” 🙏
+                </p>
+                <p className='para'>
+                  🙏 Support a Cause, Make a Change... Help us reach the target
+                  and transform more lives. Your donation helps us create
+                  meaningful impact, whether it's by supporting education,
+                  healthcare, sustainability, or community welfare. We believe
+                  in transparency, purpose, and progress. Together, let's build
+                  a better future. Please donate and be the reason someone
+                  smiles today. We’ve raised ₹35,000 so far towards our ₹50,000
+                  goal! Help us reach the target and transform more lives. Your
+                  contribution goes directly to causes like education,
+                  healthcare, and community support. 💫
+                </p>
+              </div>
+
+              <div className='summary-right'>
+                {globalSummary && (
+                  <Summary
+                    period='Total Donations (All Months)'
+                    summaryData={globalSummary}
+                  />
+                )}
+              </div>
+            </div>
+          </div>
+
+          <DonationForm onDonate={handleDonationUpdate} />
         </div>
+        <ChatBot />
+        <Footer />
       </div>
     </>
   );
