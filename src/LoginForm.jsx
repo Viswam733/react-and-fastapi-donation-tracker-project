@@ -9,11 +9,9 @@ function LoginForm() {
   const [token, setToken] = useState("");
   const [usernameError, setUsernameError] = useState("");
   const [passwordError, setPasswordError] = useState("");
-  const userAgent = navigator.userAgent;
   const navigate = useNavigate();
 
   const handleLogin = async () => {
-    // Clear previous errors
     setUsernameError("");
     setPasswordError("");
 
@@ -23,9 +21,9 @@ function LoginForm() {
 
     try {
       const formData = new URLSearchParams();
+      formData.append("grant_type", "password"); // ✅ Required by OAuth2PasswordRequestForm
       formData.append("username", username);
       formData.append("password", password);
-      formData.append("user_agent", userAgent);
 
       const response = await axios.post(
         "http://127.0.0.1:8004/login",
@@ -53,65 +51,57 @@ function LoginForm() {
   };
 
   return (
-    <>
-      <div className='container'>
-        <div className='boxed_container'>
-          <div className='boxed_container_1'>
-            <h2 className='welcome'>WELCOME</h2>
-            <h3 className='headline'>To Your Donation</h3>
-            <p className='description'>
-              Manage all your donations in one place. Track donors, monitor
-              campaigns, and view monthly trends with ease. Your impact starts
-              here!
-            </p>
-          </div>
+    <div className='container'>
+      <div className='boxed_container'>
+        <div className='boxed_container_1'>
+          <h2 className='welcome'>WELCOME</h2>
+          <h3 className='headline'>To Your Donation</h3>
+          <p className='description'>
+            Manage all your donations in one place. Track donors, monitor
+            campaigns, and view monthly trends with ease. Your impact starts
+            here!
+          </p>
+        </div>
 
-          <div className='box_container'>
-            <h3 className='signin'>LOGIN</h3>
-            <p style={{ fontWeight: "500" }} className='tagline'>
-              Login to access your donation dashboard and make real impact. View
-              contributions, track donor trends, and manage campaigns with ease.
-            </p>
+        <div className='box_container'>
+          <h3 className='signin'>LOGIN</h3>
+          <p style={{ fontWeight: "500" }} className='tagline'>
+            Login to access your donation dashboard and make real impact. View
+            contributions, track donor trends, and manage campaigns with ease.
+          </p>
 
-            <input
-              className='login-input'
-              type='text'
-              placeholder='Username'
-              onChange={(e) => {
-                setUsername(e.target.value);
-                setUsernameError("");
-              }}
-              value={username}
-              required
-            />
-            {usernameError && <p className='field-error'>{usernameError}</p>}
+          <input
+            className='login-input'
+            type='text'
+            placeholder='Username'
+            onChange={(e) => {
+              setUsername(e.target.value);
+              setUsernameError("");
+            }}
+            value={username}
+            required
+          />
+          {usernameError && <p className='field-error'>{usernameError}</p>}
 
-            <input
-              className='login-input'
-              type='password'
-              placeholder='Password'
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setPasswordError("");
-              }}
-              value={password}
-              required
-            />
-            {passwordError && <p className='field-error'>{passwordError}</p>}
+          <input
+            className='login-input'
+            type='password'
+            placeholder='Password'
+            onChange={(e) => {
+              setPassword(e.target.value);
+              setPasswordError("");
+            }}
+            value={password}
+            required
+          />
+          {passwordError && <p className='field-error'>{passwordError}</p>}
 
-            {/* <div className='flex-row'>
-              <a href='#' className='forgot'>
-                Forgot Password?
-              </a>
-            </div> */}
-
-            <button className='login-btn' onClick={handleLogin}>
-              Sign in
-            </button>
-          </div>
+          <button className='login-btn' onClick={handleLogin}>
+            Sign in
+          </button>
         </div>
       </div>
-    </>
+    </div>
   );
 }
 

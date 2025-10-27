@@ -23,7 +23,7 @@ ChartJS.register(
 );
 
 function TrendChart({ selectedMonth }) {
-  const [trendData, setTrendData] = useState([]);
+  const [trendData, setTrendData] = useState({});
   const isSingleMonth = !!selectedMonth;
 
   useEffect(() => {
@@ -36,22 +36,41 @@ function TrendChart({ selectedMonth }) {
           .map((m) => `months=${m}`)
           .join("&");
 
-    fetch(`http://localhost:8004/trend?${query}`, {
+    fetch(`http://localhost:8004/donation-trend?${query}`, {
       headers: { Authorization: `Bearer ${token}` },
     })
       .then((res) => res.json())
-      .then((data) => setTrendData(data));
+      .then((data) => {
+        console.log("📊 Trend response:", data);
+        setTrendData(data?.trend || {});
+      })
+      .catch((err) => {
+        console.error("❌ Trend fetch error:", err);
+        setTrendData({});
+      });
   }, [selectedMonth]);
 
+  const labels = Object.keys(trendData);
+  const values = Object.values(trendData);
+
+  if (labels.length === 0) {
+    return (
+      <p style={{ color: "white", marginTop: "20px" }}>
+        ⚠️ No trend data available for {selectedMonth || "selected months"}.
+      </p>
+    );
+  }
+
   const chartData = {
-    labels: trendData.map((d) => d.label), 
+    labels,
     datasets: [
       {
         label: isSingleMonth ? "Daily Donations" : "Monthly Donations",
-        data: trendData.map((d) => d.amount),
+        data: values,
         fill: false,
         tension: 0.4,
         borderWidth: 3,
+        borderColor: "#FFC0CB",
         pointBackgroundColor: "#FFC0CB",
         pointBorderColor: "#333",
       },

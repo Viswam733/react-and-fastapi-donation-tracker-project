@@ -2,8 +2,9 @@ import React, { useState } from "react";
 import axios from "axios";
 import "./App.css";
 import { toast } from "react-toastify";
+import { useRefresh } from "./RefreshContext"; // ✅ Import context
 
-const DonationForm = ({ onDonate }) => {
+const DonationForm = () => {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
@@ -13,11 +14,14 @@ const DonationForm = ({ onDonate }) => {
     date: "",
   });
 
+  const { triggerRefresh } = useRefresh(); // ✅ Use global trigger
+
   const handleChange = (e) => {
     const { name, value } = e.target;
     const formattedValue = name === "amount" ? parseInt(value) : value;
     setFormData({ ...formData, [name]: formattedValue });
   };
+
   const handleSubmit = (e) => {
     e.preventDefault();
     const token = localStorage.getItem("token");
@@ -29,9 +33,9 @@ const DonationForm = ({ onDonate }) => {
         },
       })
       .then((res) => {
-        toast.success("🎉 Thank you for your donation!"); // 👈 only shows here
+        toast.success("🎉 Thank you for your donation!");
         handleReset();
-        if (onDonate) onDonate();
+        triggerRefresh(); // ✅ Notify SummaryPage to refresh
       })
       .catch((err) => {
         toast.error("❌ Donation failed. Please try again.");
@@ -103,14 +107,12 @@ const DonationForm = ({ onDonate }) => {
           />
         </div>
 
-        {/* Centered Donate Button */}
         <div className='button_group'>
           <button className='button_donate' type='submit'>
             Donate
           </button>
         </div>
 
-        {/* Reset Button below Donate */}
         <div className='reset_button_group'>
           <button className='button_reset' type='button' onClick={handleReset}>
             Reset Form

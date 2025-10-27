@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { jwtDecode } from "jwt-decode";
 import axios from "axios";
 import DonationForm from "./DonationForm";
 import "./App.css";
 import Navigation from "./Navigation";
 import Footer from "./Footer";
-import Summary from "./Summary"; // ✨ If you're displaying it here
 import ChatBot from "./ChatBot";
+
 const Home = () => {
   const navigate = useNavigate();
 
@@ -15,9 +15,6 @@ const Home = () => {
     const now = new Date();
     return now.toISOString().slice(0, 7);
   });
-
-  const [summaryData, setSummaryData] = useState(null);
-  const [globalSummary, setGlobalSummary] = useState(null);
 
   useEffect(() => {
     const token = localStorage.getItem("token");
@@ -30,41 +27,16 @@ const Home = () => {
         if (decoded.exp < now) {
           localStorage.removeItem("token");
           navigate("/");
-        } else {
-          // 🔁 Monthly summary
-          axios
-            .get(`http://localhost:8004/dashboard?month=${selectedMonth}`, {
-              headers: { Authorization: `Bearer ${token}` },
-            })
-            .then((res) => setSummaryData(res.data.summary));
-
-          axios
-            .get("http://localhost:8004/summary", {
-              headers: { Authorization: `Bearer ${token}` },
-            })
-            .then((res) => setGlobalSummary(res.data));
         }
       } catch (err) {
         localStorage.removeItem("token");
         navigate("/");
       }
     }
-  }, [selectedMonth]);
+  }, []);
 
   const handleDonationUpdate = () => {
-    const token = localStorage.getItem("token");
-
-    axios
-      .get(`http://localhost:8004/dashboard?month=${selectedMonth}`, {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => setSummaryData(res.data.summary));
-
-    axios
-      .get("http://localhost:8004/summary", {
-        headers: { Authorization: `Bearer ${token}` },
-      })
-      .then((res) => setGlobalSummary(res.data));
+    // Optional: refresh donation stats if needed
   };
 
   return (
@@ -87,21 +59,11 @@ const Home = () => {
                   healthcare, sustainability, or community welfare. We believe
                   in transparency, purpose, and progress. Together, let's build
                   a better future. Please donate and be the reason someone
-                  smiles today. We’ve raised ₹35,000 so far towards our ₹50,000
-                  goal! Help us reach the target and transform more lives. Your
-                  contribution goes directly to causes like education,
-                  healthcare, and community support. 💫
+                  smiles today. 💫
                 </p>
               </div>
 
-              <div className='summary-right'>
-                {globalSummary && (
-                  <Summary
-                    period='Total Donations (All Months)'
-                    summaryData={globalSummary}
-                  />
-                )}
-              </div>
+              {/* ❌ Removed summary-right block */}
             </div>
           </div>
 

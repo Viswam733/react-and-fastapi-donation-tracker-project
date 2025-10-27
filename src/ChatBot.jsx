@@ -21,12 +21,14 @@ const ChatBot = () => {
     setTyping(true);
 
     try {
-      const res = await fetch("http://localhost:8000/chat", {
+      const token = localStorage.getItem("token");
+
+      const res = await fetch("http://localhost:8004/chat", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          // If using login: add Authorization header here
-          // Authorization: `Bearer ${yourToken}`
+          Authorization: `Bearer ${token}`,
+          "User-Agent": navigator.userAgent,
         },
         body: JSON.stringify({ query: input }),
       });
@@ -49,18 +51,6 @@ const ChatBot = () => {
       setTyping(false);
     }
   };
-
-  const generateBotReply = (input) => {
-    const lower = input.toLowerCase();
-    if (lower.includes("sona")) return "I am fine 😌";
-    if (lower.includes("backend"))
-      return "Yes , backend is needed for dynamic replies 💡";
-    if (lower.includes("design"))
-      return "Design coming up ! UI should be clean and responsive 🎨";
-    if (lower.includes("thanks")) return "Always here for you 💙";
-    return `Hmm... tell me more about "${input}" 👀`;
-  };
-
   useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight;
@@ -172,7 +162,7 @@ const ChatBot = () => {
                 cursor: "pointer",
               }}
             >
-              🧹 Clear
+              Clear
             </button>
           </div>
 
@@ -195,6 +185,9 @@ const ChatBot = () => {
                     borderRadius: "8px",
                     display: "inline-block",
                     color: "white",
+                    fontSize: msg.sender === "bot" ? "12px" : "14px",
+                    whiteSpace: "pre-wrap",
+                    fontFamily: "monospace",
                   }}
                 >
                   {msg.text}

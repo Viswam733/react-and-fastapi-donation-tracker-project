@@ -1,61 +1,46 @@
 import React, { useEffect, useState } from "react";
-import { useNavigate } from "react-router-dom";
-import { jwtDecode } from "jwt-decode";
-import axios from "axios";
 import Summary from "./Summary";
 import DonationList from "./DonationList";
 import TrendChart from "./TrendChart";
 import DonationExport from "./DonationExport";
+import { useRefresh } from "./RefreshContext"; // ✅ Import context
 
 function SummaryPage() {
-  const navigate = useNavigate();
-  const [summaryData, setSummaryData] = useState(null);
   const [selectedMonth, setSelectedMonth] = useState("");
+  const [summaryData, setSummaryData] = useState(null);
+  const [loading, setLoading] = useState(true);
+
+  const { refreshKey } = useRefresh(); // ✅ Use global refresh trigger
 
   const selectedMonthReadable = selectedMonth
-    ? new Date(selectedMonth + "-01").toLocaleDateString("en-IN", {
+    ? new Date(selectedMonth + "-01").toLocaleString("en-IN", {
         month: "long",
         year: "numeric",
       })
-    : "All Months Combined";
+    : "All Months";
 
   useEffect(() => {
     const token = localStorage.getItem("token");
-    if (!token) {
-      navigate("/");
-      return;
-    }
+    if (!token) return;
 
-    try {
-      const decoded = jwtDecode(token);
-      const now = Date.now() / 1000;
-      if (decoded.exp < now) {
-        localStorage.removeItem("token");
-        navigate("/");
-        return;
-      }
+    const endpoint = selectedMonth
+      ? `http://localhost:8004/dashboard?month=${selectedMonth}`
+      : `http://localhost:8004/dashboard`;
 
-      const endpoint = selectedMonth
-        ? `http://localhost:8004/dashboard?month=${selectedMonth}`
-        : `http://localhost:8004/dashboard`;
-
-      axios
-        .get(endpoint, {
-          headers: { Authorization: `Bearer ${token}` },
-        })
-        .then((res) => {
-          const data = res.data?.summary;
-          if (data && typeof data === "object") {
-            setSummaryData(data);
-          } else {
-            setSummaryData(null); // fallback if summary is missing
-          }
-        });
-    } catch (err) {
-      localStorage.removeItem("token");
-      navigate("/");
-    }
-  }, [selectedMonth]);
+    fetch(endpoint, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+      .then((res) => res.json())
+      .then((data) => {
+        console.log("📦 Dashboard response:", data);
+        setSummaryData(data?.summary || null);
+      })
+      .catch((err) => {
+        console.error("Dashboard fetch error:", err);
+        setSummaryData(null);
+      })
+      .finally(() => setLoading(false));
+  }, [selectedMonth, refreshKey]); // ✅ Re-fetch when refreshKey changes
 
   return (
     <div className='summary-page'>
@@ -65,7 +50,10 @@ function SummaryPage() {
         </label>
         <select
           value={selectedMonth}
-          onChange={(e) => setSelectedMonth(e.target.value)}
+          onChange={(e) => {
+            setSelectedMonth(e.target.value);
+            setLoading(true);
+          }}
           style={{ padding: "10px", fontSize: "16px", borderRadius: "8px" }}
         >
           <option value=''>All Months</option>
@@ -82,9 +70,17 @@ function SummaryPage() {
         </div>
       </div>
 
-      <Summary period={selectedMonthReadable} summaryData={summaryData} />
-      <DonationList selectedMonth={selectedMonth} />
-      <TrendChart selectedMonth={selectedMonth} />
+      {loading ? (
+        <p style={{ color: "white", marginTop: "20px" }}>
+          ⏳ Loading summary...
+        </p>
+      ) : (
+        <>
+          <Summary period={selectedMonthReadable} summaryData={summaryData} />
+          <DonationList selectedMonth={selectedMonth} key={refreshKey} />
+          <TrendChart selectedMonth={selectedMonth} key={refreshKey} />
+        </>
+      )}
     </div>
   );
 }
